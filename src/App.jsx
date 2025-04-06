@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from "react";
 
-// const tempMovieData = [
-//   {
-//     imdbID: "tt1375666",
-//     Title: "Inception",
-//     Year: "2010",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-//   },
-//   {
-//     imdbID: "tt0133093",
-//     Title: "The Matrix",
-//     Year: "1999",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
-//   },
-//   {
-//     imdbID: "tt6751668",
-//     Title: "Parasite",
-//     Year: "2019",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
-//   },
-// ];
+const tempMovieData = [
+  {
+    imdbID: "tt1375666",
+    Title: "Inception",
+    Year: "2010",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
+  },
+  {
+    imdbID: "tt0133093",
+    Title: "The Matrix",
+    Year: "1999",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
+  },
+  {
+    imdbID: "tt6751668",
+    Title: "Parasite",
+    Year: "2019",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
+  },
+];
 
 // const tempWatchedData = [
 //   {
@@ -59,12 +59,25 @@ export default function App() {
   const [error, setError] = useState("");
   const [isOpen1, setIsOpen1] = useState(true);
   const [isOpen2, setIsOpen2] = useState(true);
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
   // const query = "sdfasdf"; // Default search query
-  const query = "Avengers"; // Example search query
+  // const tempQuery = "Avengers"; // Example search query
+
+  function handleSelectMovie(id) {
+    setSelectedId((selectedId) => id === selectedId ? null : id);
+    setIsOpen2(true);
+  }
+
+  function handleCloseDetails() {
+    setSelectedId(null);
+  }
 
   useEffect(() => {
     async function fetchMovies() {
       try {
+        setError("");
+        setIsLoading(true);
         const response = await fetch(`http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`);
 
         if (!response.ok) {
@@ -81,18 +94,26 @@ export default function App() {
       } catch (error) {
         console.error(error.message);
         setError(error.message);
+        setMovies([]);
       } finally {
         setIsLoading(false);
       }
     }
+
+    if (query.length < 3) {
+      setMovies(tempMovieData);
+      setError("");
+      setIsLoading(false);
+      return;
+    }
     fetchMovies();
-  }, []);
+  }, [query]);
 
 
   return (
     <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 min-h-screen text-zinc-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <Header movies={movies} />
+        <Header movies={movies} query={query} setQuery={setQuery} />
 
         <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide ${isOpen1 ? "h-120" : "h-auto"}`}>
@@ -102,7 +123,7 @@ export default function App() {
               </SectionHeader>
             </div>
             {error && <ErrorMessage message={error} />}
-            {!isLoading && !error && isOpen1 && <MovieList movies={movies} />}
+            {!isLoading && !error && isOpen1 && <MovieList movies={movies} onSelectMovie={handleSelectMovie} />}
             {isLoading && <Loader />}
 
           </div>
@@ -114,12 +135,16 @@ export default function App() {
               </SectionHeader>
             </div>
             {isOpen2 && (
-              <>
-                <div className="sticky top-0 z-10 bg-zinc-800 w-full">
-                  <WatchedSummary watched={watched} />
-                </div>
-                <WatchedMovies watched={watched} />
-              </>
+              selectedId ? (
+                <MovieDetails selectedId={selectedId} onCloseDetails={handleCloseDetails} />
+              ) : (
+                <>
+                  <div className="sticky top-0 z-10 bg-zinc-800 w-full">
+                    <WatchedSummary watched={watched} />
+                  </div>
+                  <WatchedMovies watched={watched} />
+                </>
+              )
             )}
           </div>
         </main>
@@ -159,7 +184,7 @@ function Loader() {
   );
 }
 
-function Header({ movies }) {
+function Header({ movies, query, setQuery }) {
   return (
     <header className="mb-8">
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -171,9 +196,9 @@ function Header({ movies }) {
             CinemaTracker
           </h1>
         </div>
-        <SearchBox />
+        <SearchBox query={query} setQuery={setQuery}/>
       </div>
-      <FoundResults movieCount={movies.length} />
+      <FoundResults movieCount={movies?.length || 0} />
     </header>
   );
 }
@@ -193,8 +218,7 @@ function SectionHeader({ children, isOpen, setIsOpen }) {
   );
 }
 
-function SearchBox() {
-  const [query, setQuery] = useState("");
+function SearchBox({ query, setQuery }) {
 
   return (
     <div className="relative">
@@ -225,17 +249,17 @@ function FoundResults({ movieCount }) {
   );
 }
 
-function MovieList({ movies }) {
+function MovieList({ movies, onSelectMovie }) {
   return (
     <ul className="divide-y divide-zinc-700">
       {movies?.map((movie) => (
-        <Movie key={movie.imdbID} movie={movie} />
+        <Movie key={movie.imdbID} movie={movie} onSelectMovie={onSelectMovie} />
       ))}
     </ul>
   );
 }
 
-function Movie({ movie }) {
+function Movie({ movie, onSelectMovie }) {
   return (
     <li
       className="flex items-center gap-4 p-4 
@@ -243,6 +267,7 @@ function Movie({ movie }) {
                  transition duration-300 
                  cursor-pointer 
                  group"
+      onClick={() => onSelectMovie(movie.imdbID)}
     >
       <img
         src={movie.Poster}
@@ -259,6 +284,26 @@ function Movie({ movie }) {
         </div>
       </div>
     </li>
+  );
+}
+
+function MovieDetails({ selectedId, onCloseDetails }) {
+  return (
+    <div className="p-4">
+      <button
+        className="bg-zinc-700 rounded-full  px-4 py-2 hover:bg-zinc-600 hover:text-teal-400 transition duration-300 font-bold"
+        onClick={onCloseDetails}
+      >
+        &larr;
+      </button>
+      <div
+        className="bg-zinc-700 rounded-lg p-4 mt-4 transition-transform duration-500 transform translate-y-0"
+        style={{ transform: "translateY(0)" }}
+      >
+        {/* Movie details content goes here */}
+        <p className="font-bold">{selectedId}</p>
+      </div>
+    </div>
   );
 }
 
