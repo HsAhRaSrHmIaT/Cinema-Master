@@ -1,93 +1,60 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-// const tempMovieData = [
-//   {
-//     imdbID: "tt1375666",
-//     Title: "Inception",
-//     Year: "2010",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-//   },
-//   {
-//     imdbID: "tt0133093",
-//     Title: "The Matrix",
-//     Year: "1999",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
-//   },
-//   {
-//     imdbID: "tt6751668",
-//     Title: "Parasite",
-//     Year: "2019",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
-//   },
-// ];
+const tempMovieData = [
+  {
+    imdbID: "tt1375666",
+    Title: "Inception",
+    Year: "2010",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
+  },
+  {
+    imdbID: "tt0133093",
+    Title: "The Matrix",
+    Year: "1999",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
+  },
+  {
+    imdbID: "tt6751668",
+    Title: "Parasite",
+    Year: "2019",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
+  },
+];
 
-// const tempWatchedData = [
-//   {
-//     imdbID: "tt1375666",
-//     Title: "Inception",
-//     Year: "2010",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-//     runtime: 148,
-//     imdbRating: 8.8,
-//     userRating: 10,
-//   },
-//   {
-//     imdbID: "tt0088763",
-//     Title: "Back to the Future",
-//     Year: "1985",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
-//     runtime: 116,
-//     imdbRating: 8.5,
-//     userRating: 9,
-//   },
-// ];
+const tempWatchedData = [
+  {
+    imdbID: "tt1375666",
+    Title: "Inception",
+    Year: "2010",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
+    runtime: 148,
+    imdbRating: 8.8,
+    userRating: 10,
+  },
+  {
+    imdbID: "tt0088763",
+    Title: "Back to the Future",
+    Year: "1985",
+    Poster:
+      "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
+    runtime: 116,
+    imdbRating: 8.5,
+    userRating: 9,
+  },
+];
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
-const KEY = import.meta.env.VITE_API_KEY;
-
 export default function App() {
-  const [movies, setMovies] = useState([]);
-  const [watched, setWatched] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [movies, setMovies] = useState(tempMovieData);
+  const [watched, setWatched] = useState(tempWatchedData);
   const [isOpen1, setIsOpen1] = useState(true);
   const [isOpen2, setIsOpen2] = useState(true);
-  // const query = "sdfasdf"; // Default search query
-  const query = "Avengers"; // Example search query
-
-  useEffect(() => {
-    async function fetchMovies() {
-      try {
-        const response = await fetch(`http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`);
-
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        const data = await response.json();
-        console.log(data);
-        if (data.Response === "False") {
-          throw new Error(data.Error);
-        }
-        setMovies(data.Search);
-        console.log(data);
-      } catch (error) {
-        console.error(error.message);
-        setError(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchMovies();
-  }, []);
-
 
   return (
     <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 min-h-screen text-zinc-100 p-4 md:p-8">
@@ -95,65 +62,25 @@ export default function App() {
         <Header movies={movies} />
 
         <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide ${isOpen1 ? "h-120" : "h-auto"}`}>
-            <div className="sticky top-0 z-10">
-              <SectionHeader isOpen={isOpen1} setIsOpen={setIsOpen1}>
-                Movie Catalog
-              </SectionHeader>
-            </div>
-            {error && <ErrorMessage message={error} />}
-            {!isLoading && !error && isOpen1 && <MovieList movies={movies} />}
-            {isLoading && <Loader />}
-
+          <div className="bg-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
+            <SectionHeader isOpen={isOpen1} setIsOpen={setIsOpen1}>
+              Movie Catalog
+            </SectionHeader>
+            {isOpen1 && <MovieList movies={movies} />}
           </div>
 
-          <div className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide ${isOpen2 ? "h-120" : "h-auto"} `}>
-            <div className="sticky top-0 z-10">
-              <SectionHeader isOpen={isOpen2} setIsOpen={setIsOpen2}>
-                Watched Movies
-              </SectionHeader>
-            </div>
+          <div className="bg-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
+            <SectionHeader isOpen={isOpen2} setIsOpen={setIsOpen2}>
+              Watched Movies
+            </SectionHeader>
             {isOpen2 && (
               <>
-                <div className="sticky top-0 z-10 bg-zinc-800 w-full">
-                  <WatchedSummary watched={watched} />
-                </div>
+                <WatchedSummary watched={watched} />
                 <WatchedMovies watched={watched} />
               </>
             )}
           </div>
         </main>
-      </div>
-    </div>
-  );
-}
-
-function ErrorMessage({ message }) {
-  return (
-    <div className="p-4 bg-zinc-700 rounded-lg m-4 border border-red-500">
-      <p className="text-red-400 text-center font-semibold">
-        {message}
-      </p>
-    </div>
-  );
-}
-
-function Loader() {
-  return (
-    <div className="p-4">
-      <div className="space-y-4">
-        {[...Array(5)].map((_, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-4 animate-pulse"
-          >
-            <div className="w-16 h-24 bg-zinc-700 rounded-lg"></div>
-            <div className="flex-1 space-y-2">
-              <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
-              <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -180,7 +107,7 @@ function Header({ movies }) {
 
 function SectionHeader({ children, isOpen, setIsOpen }) {
   return (
-    <div className="bg-zinc-700 p-4 border-b border-zinc-600 flex items-center justify-between position-fixed">
+    <div className="bg-zinc-700 p-4 border-b border-zinc-600 flex items-center justify-between">
       <h2 className="text-xl font-semibold text-zinc-200">{children}</h2>
       <button
         className="text-teal-400 hover:text-teal-300 transition duration-300 flex items-center gap-1"
