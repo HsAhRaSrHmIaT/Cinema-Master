@@ -62,8 +62,6 @@ export default function App() {
   const [isOpen2, setIsOpen2] = useState(true);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
-  // const query = "sdfasdf"; // Default search query
-  // const tempQuery = "Avengers"; // Example search query
 
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (id === selectedId ? null : id));
@@ -72,6 +70,14 @@ export default function App() {
 
   function handleCloseDetails() {
     setSelectedId(null);
+  }
+
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie]);
+  }
+
+  function handleDeleteWatched(id) {
+    setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
 
   useEffect(() => {
@@ -88,12 +94,12 @@ export default function App() {
         }
 
         const data = await response.json();
-        console.log(data);
+        // console.log(data);
         if (data.Response === "False") {
           throw new Error(data.Error);
         }
         setMovies(data.Search);
-        console.log(data);
+        // console.log(data);
       } catch (error) {
         console.error(error.message);
         setError(error.message);
@@ -132,7 +138,7 @@ export default function App() {
             {!isLoading && !error && isOpen1 && (
               <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
             )}
-            {isLoading && <Loader />}
+            {isLoading && <Loader type={"list"} />}
           </div>
 
           <div
@@ -150,13 +156,18 @@ export default function App() {
                 <MovieDetails
                   selectedId={selectedId}
                   onCloseDetails={handleCloseDetails}
+                  onAddWatched={handleAddWatched}
+                  watched={watched}
                 />
               ) : (
                 <>
                   <div className="sticky top-0 z-10 bg-zinc-800 w-full">
                     <WatchedSummary watched={watched} />
                   </div>
-                  <WatchedMovies watched={watched} />
+                  <WatchedMovies
+                    watched={watched}
+                    onDeleteWatched={handleDeleteWatched}
+                  />
                 </>
               ))}
           </div>
@@ -174,24 +185,51 @@ function ErrorMessage({ message }) {
   );
 }
 
-function Loader() {
+function Loader({ type }) {
   return (
-    <div className="p-4">
-      <div className="space-y-4">
-        {[...Array(5)].map((_, index) => (
-          <div key={index} className="flex items-center gap-4 animate-pulse">
-            <div className="w-16 h-24 bg-zinc-700 rounded-lg"></div>
-            <div className="flex-1 space-y-2">
-              <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
-              <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
+    <>
+      {type === "list" && (
+        <div className="p-4">
+          <div className="space-y-4">
+            {[...Array(5)].map((_, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-4 animate-pulse"
+              >
+                <div className="w-16 h-24 bg-zinc-700 rounded-lg"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
+                  <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {type === "details" && (
+        <div className="p-4 space-y-6 animate-pulse">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex flex-col sm:flex-row items-start gap-4 pr-10">
+              <div className="w-32 h-48 bg-zinc-700 rounded-lg"></div>
+              <div className="space-y-2 mt-2 sm:mt-0 flex-1">
+                <div className="h-6 bg-zinc-700 rounded w-3/4"></div>
+                <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
+                <div className="h-4 bg-zinc-700 rounded w-1/3"></div>
+                <div className="h-4 bg-zinc-700 rounded w-1/4"></div>
+              </div>
             </div>
           </div>
-        ))}
-      </div>
-    </div>
+          <div className="space-y-4">
+            <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
+            <div className="h-4 bg-zinc-700 rounded w-full"></div>
+            <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
+            <div className="h-4 bg-zinc-700 rounded w-2/3"></div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
-
 function Header({ movies, query, setQuery }) {
   return (
     <header className="mb-8">
@@ -294,8 +332,14 @@ function Movie({ movie, onSelectMovie }) {
   );
 }
 
-function MovieDetails({ selectedId, onCloseDetails }) {
+function MovieDetails({ selectedId, onCloseDetails, onAddWatched, watched }) {
   const [movie, setMovie] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [userRating, setUserRating] = useState(0);
+  const isWatched = watched.some((movie) => movie.imdbID === selectedId);
+  const alreadyRated = watched.find(
+    (movie) => movie.imdbID === selectedId
+  )?.userRating;
 
   const {
     Title: title,
@@ -310,9 +354,24 @@ function MovieDetails({ selectedId, onCloseDetails }) {
     imdbRating,
   } = movie;
 
+  function handleAdd() {
+    const newMovie = {
+      imdbID: selectedId,
+      Title: title,
+      Poster: poster,
+      runtime: parseInt(runtime),
+      imdbRating: parseFloat(imdbRating),
+      userRating: userRating,
+    };
+
+    onAddWatched(newMovie);
+    onCloseDetails();
+  }
+
   useEffect(() => {
     async function fetchMovieDetails() {
       try {
+        setIsLoading(true);
         const response = await fetch(
           `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
         );
@@ -325,54 +384,91 @@ function MovieDetails({ selectedId, onCloseDetails }) {
         setMovie(data);
       } catch (error) {
         console.error(error.message);
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchMovieDetails();
   }, [selectedId]);
 
   return (
-    <div className="p-4 bg-zinc-800 rounded-lg shadow-lg text-zinc-100 space-y-6 relative">
-      <div className="flex justify-between items-start mb-4">
-        <header className="flex flex-col sm:flex-row items-start gap-4 pr-10">
-          <img
-            src={poster}
-            alt={`${title} poster`}
-            className="w-32 h-48 object-cover rounded-lg shadow-md"
-          />
-          <div className="space-y-2 mt-2 sm:mt-0">
-            <h2 className="text-2xl font-bold text-teal-400 pr-8">{title}</h2>
-            <p className="text-sm text-zinc-400">
-              {released} &bull; {runtime}
-            </p>
-            <p className="text-sm text-zinc-400">{genre}</p>
-            <p className="text-sm text-yellow-400">
-              <span>⭐</span> {imdbRating} IMDb Rating
-            </p>
+    <div className="p-4 bg-zinc-800 rounded-lg shadow-lg text-zinc-100 space-y-6 relative overflow-y-auto scrollbar-hide h-120">
+      {isLoading ? (
+        <Loader type={"details"} />
+      ) : (
+        <>
+          <div className="flex justify-between items-start mb-4">
+            <header className="flex flex-col sm:flex-row items-start gap-4 pr-10">
+              <img
+                src={poster}
+                alt={`${title} poster`}
+                className="w-32 h-48 object-cover rounded-lg shadow-md"
+              />
+              <div className="space-y-2 mt-2 sm:mt-0">
+                <h2 className="text-2xl font-bold text-teal-400 pr-8">
+                  {title}
+                </h2>
+                <p className="text-sm text-zinc-400">
+                  {released} &bull; {runtime}
+                </p>
+                <p className="text-sm text-zinc-400">{genre}</p>
+                <p className="text-sm text-yellow-400">
+                  <span>⭐</span> {imdbRating} IMDb Rating
+                </p>
+              </div>
+            </header>
+
+            <button
+              className="absolute top-4 right-4 bg-zinc-700 rounded-full p-2
+        text-zinc-400 hover:text-teal-400 transition duration-300 w-10 h-10 flex items-center justify-center"
+              onClick={onCloseDetails}
+              aria-label="Go back"
+            >
+              <span className="text-2xl">&larr;</span>
+            </button>
           </div>
-        </header>
 
-        <button
-          className="absolute top-4 right-4 bg-zinc-700 rounded-full p-2
-      text-zinc-400 hover:text-teal-400 transition duration-300 w-10 h-10 flex items-center justify-center"
-          onClick={onCloseDetails}
-          aria-label="Go back"
-        >
-          <span className="text-2xl">&larr;</span>
-        </button>
-      </div>
+          <section className="space-y-4">
+            <div
+              className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${
+                userRating > 0 ? "bg-zinc-700/50" : ""
+              } p-4 rounded-lg w-full`}
+            >
+              <div className="flex items-center gap-2">
+                {isWatched ? (
+                  <p className="text-green-400 font-semibold text-start">
+                    Already Watched and Rated <span>⭐</span>
+                    {alreadyRated}
+                  </p>
+                ) : (
+                  <StarRating maxRating={10} size={20} onRate={setUserRating} />
+                )}
+                <span className="text-yellow-400 font-semibold">
+                  {userRating > 0 ? userRating : ""}
+                </span>
+              </div>
 
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <StarRating maxRating={10} size={24} />
-        </div>
-        <p className="text-sm text-zinc-300 italic">{plot}</p>
-        <p className="text-sm text-zinc-300">
-          <strong className="text-zinc-100">Actors:</strong> {actors}
-        </p>
-        <p className="text-sm text-zinc-300">
-          <strong className="text-zinc-100">Director:</strong> {director}
-        </p>
-      </section>
+              {userRating > 0 && (
+                <button
+                  className="bg-teal-500 text-zinc-100 px-4 py-2 rounded-lg hover:bg-teal-400 transition duration-300 w-full sm:w-auto text-center"
+                  onClick={() => {
+                    handleAdd();
+                  }}
+                >
+                  Add to Watched
+                </button>
+              )}
+            </div>
+            <p className="text-sm text-zinc-300 italic">{plot}</p>
+            <p className="text-sm text-zinc-300">
+              <strong className="text-zinc-100">Actors:</strong> {actors}
+            </p>
+            <p className="text-sm text-zinc-300">
+              <strong className="text-zinc-100">Director:</strong> {director}
+            </p>
+          </section>
+        </>
+      )}
     </div>
   );
 }
@@ -419,7 +515,14 @@ function StatCard({ icon, value, color }) {
   );
 }
 
-function WatchedMovies({ watched }) {
+function WatchedMovies({ watched, onDeleteWatched }) {
+  if (watched.length === 0) {
+    return (
+      <div className="p-4 text-center text-zinc-400">
+        No movies watched yet. Start watching!
+      </div>
+    );
+  }
   return (
     <ul className="divide-y divide-zinc-700">
       {watched.map((movie) => (
@@ -440,20 +543,26 @@ function WatchedMovies({ watched }) {
               <MovieRating
                 icon="⭐️"
                 rating={movie.imdbRating}
-                color="text-yellow-400"
+                color="text-zinc-100"
               />
               <MovieRating
                 icon="🌟"
                 rating={movie.userRating}
-                color="text-green-400"
+                color="text-zinc-100"
               />
               <MovieRating
                 icon="⏳"
                 rating={`${movie.runtime} min`}
-                color="text-blue-400"
+                color="text-zinc-100"
               />
             </div>
           </div>
+          <button
+            className="text-zinc-400 hover:text-teal-400 transition duration-300 bg-zinc-700 rounded-full p-2"
+            onClick={() => onDeleteWatched(movie.imdbID)}
+          >
+            <span className="text-2xl">&times;</span>
+          </button>
         </li>
       ))}
     </ul>

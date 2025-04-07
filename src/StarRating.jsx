@@ -4,12 +4,14 @@ function StarRating({
     maxRating = 5 ,
     color = "#fcc419",
     size = "40",
+    onRate = () => {},
 }) {
     const [rating, setRating] = React.useState(0);
     const [hoveredStar, setHoveredStar] = React.useState(0);
 
     function handleRating(newRating) {
         setRating(newRating);
+        onRate(newRating);
     }
 
     return (
@@ -27,7 +29,7 @@ function StarRating({
                     />
                 ))}
             </div>
-            <p style={{ color, fontSize: `${size / 1.5}px` }}>{hoveredStar || rating || ""}</p>
+            {/* <p style={{ color, fontSize: `${size / 1.5}px` }}>{hoveredStar || rating || ""}</p> */}
         </div>
     );
 }
