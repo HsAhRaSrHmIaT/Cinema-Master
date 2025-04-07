@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import StarRating from "./StarRating";
 
 const tempMovieData = [
   {
@@ -65,7 +66,7 @@ export default function App() {
   // const tempQuery = "Avengers"; // Example search query
 
   function handleSelectMovie(id) {
-    setSelectedId((selectedId) => id === selectedId ? null : id);
+    setSelectedId((selectedId) => (id === selectedId ? null : id));
     setIsOpen2(true);
   }
 
@@ -78,7 +79,9 @@ export default function App() {
       try {
         setError("");
         setIsLoading(true);
-        const response = await fetch(`http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`);
+        const response = await fetch(
+          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`
+        );
 
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -109,34 +112,45 @@ export default function App() {
     fetchMovies();
   }, [query]);
 
-
   return (
     <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 min-h-screen text-zinc-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         <Header movies={movies} query={query} setQuery={setQuery} />
 
         <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide ${isOpen1 ? "h-120" : "h-auto"}`}>
+          <div
+            className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide ${
+              isOpen1 ? "h-120" : "h-auto"
+            }`}
+          >
             <div className="sticky top-0 z-10">
               <SectionHeader isOpen={isOpen1} setIsOpen={setIsOpen1}>
                 Movie Catalog
               </SectionHeader>
             </div>
             {error && <ErrorMessage message={error} />}
-            {!isLoading && !error && isOpen1 && <MovieList movies={movies} onSelectMovie={handleSelectMovie} />}
+            {!isLoading && !error && isOpen1 && (
+              <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
+            )}
             {isLoading && <Loader />}
-
           </div>
 
-          <div className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide ${isOpen2 ? "h-120" : "h-auto"} `}>
+          <div
+            className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide ${
+              isOpen2 ? "h-120" : "h-auto"
+            } `}
+          >
             <div className="sticky top-0 z-10">
               <SectionHeader isOpen={isOpen2} setIsOpen={setIsOpen2}>
                 Watched Movies
               </SectionHeader>
             </div>
-            {isOpen2 && (
-              selectedId ? (
-                <MovieDetails selectedId={selectedId} onCloseDetails={handleCloseDetails} />
+            {isOpen2 &&
+              (selectedId ? (
+                <MovieDetails
+                  selectedId={selectedId}
+                  onCloseDetails={handleCloseDetails}
+                />
               ) : (
                 <>
                   <div className="sticky top-0 z-10 bg-zinc-800 w-full">
@@ -144,8 +158,7 @@ export default function App() {
                   </div>
                   <WatchedMovies watched={watched} />
                 </>
-              )
-            )}
+              ))}
           </div>
         </main>
       </div>
@@ -156,9 +169,7 @@ export default function App() {
 function ErrorMessage({ message }) {
   return (
     <div className="p-4 bg-zinc-700 rounded-lg m-4 border border-red-500">
-      <p className="text-red-400 text-center font-semibold">
-        {message}
-      </p>
+      <p className="text-red-400 text-center font-semibold">{message}</p>
     </div>
   );
 }
@@ -168,10 +179,7 @@ function Loader() {
     <div className="p-4">
       <div className="space-y-4">
         {[...Array(5)].map((_, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-4 animate-pulse"
-          >
+          <div key={index} className="flex items-center gap-4 animate-pulse">
             <div className="w-16 h-24 bg-zinc-700 rounded-lg"></div>
             <div className="flex-1 space-y-2">
               <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
@@ -196,7 +204,7 @@ function Header({ movies, query, setQuery }) {
             CinemaTracker
           </h1>
         </div>
-        <SearchBox query={query} setQuery={setQuery}/>
+        <SearchBox query={query} setQuery={setQuery} />
       </div>
       <FoundResults movieCount={movies?.length || 0} />
     </header>
@@ -219,7 +227,6 @@ function SectionHeader({ children, isOpen, setIsOpen }) {
 }
 
 function SearchBox({ query, setQuery }) {
-
   return (
     <div className="relative">
       <input
@@ -288,21 +295,84 @@ function Movie({ movie, onSelectMovie }) {
 }
 
 function MovieDetails({ selectedId, onCloseDetails }) {
+  const [movie, setMovie] = useState({});
+
+  const {
+    Title: title,
+    // Year: year,
+    Poster: poster,
+    Plot: plot,
+    Director: director,
+    Actors: actors,
+    Released: released,
+    Genre: genre,
+    Runtime: runtime,
+    imdbRating,
+  } = movie;
+
+  useEffect(() => {
+    async function fetchMovieDetails() {
+      try {
+        const response = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const data = await response.json();
+        setMovie(data);
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
+    fetchMovieDetails();
+  }, [selectedId]);
+
   return (
-    <div className="p-4">
-      <button
-        className="bg-zinc-700 rounded-full  px-4 py-2 hover:bg-zinc-600 hover:text-teal-400 transition duration-300 font-bold"
-        onClick={onCloseDetails}
-      >
-        &larr;
-      </button>
-      <div
-        className="bg-zinc-700 rounded-lg p-4 mt-4 transition-transform duration-500 transform translate-y-0"
-        style={{ transform: "translateY(0)" }}
-      >
-        {/* Movie details content goes here */}
-        <p className="font-bold">{selectedId}</p>
+    <div className="p-4 bg-zinc-800 rounded-lg shadow-lg text-zinc-100 space-y-6 relative">
+      <div className="flex justify-between items-start mb-4">
+        <header className="flex flex-col sm:flex-row items-start gap-4 pr-10">
+          <img
+            src={poster}
+            alt={`${title} poster`}
+            className="w-32 h-48 object-cover rounded-lg shadow-md"
+          />
+          <div className="space-y-2 mt-2 sm:mt-0">
+            <h2 className="text-2xl font-bold text-teal-400 pr-8">{title}</h2>
+            <p className="text-sm text-zinc-400">
+              {released} &bull; {runtime}
+            </p>
+            <p className="text-sm text-zinc-400">{genre}</p>
+            <p className="text-sm text-yellow-400">
+              <span>⭐</span> {imdbRating} IMDb Rating
+            </p>
+          </div>
+        </header>
+
+        <button
+          className="absolute top-4 right-4 bg-zinc-700 rounded-full p-2
+      text-zinc-400 hover:text-teal-400 transition duration-300 w-10 h-10 flex items-center justify-center"
+          onClick={onCloseDetails}
+          aria-label="Go back"
+        >
+          <span className="text-2xl">&larr;</span>
+        </button>
       </div>
+
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <StarRating maxRating={10} size={24} />
+        </div>
+        <p className="text-sm text-zinc-300 italic">{plot}</p>
+        <p className="text-sm text-zinc-300">
+          <strong className="text-zinc-100">Actors:</strong> {actors}
+        </p>
+        <p className="text-sm text-zinc-300">
+          <strong className="text-zinc-100">Director:</strong> {director}
+        </p>
+      </section>
     </div>
   );
 }
