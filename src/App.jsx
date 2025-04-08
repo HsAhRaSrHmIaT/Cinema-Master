@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
 import StarRating from "./StarRating";
+import { WatchedSummary } from "./WatchedSummary";
+import { Movie } from "./Movie";
+import { Loader } from "./Loader";
+import { Header } from "./Header";
+import { WatchedMovies } from "./WatchedMovies";
+import { MovieDetails } from "./MovieDetails";
 
 const tempMovieData = [
   {
@@ -24,32 +30,6 @@ const tempMovieData = [
       "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
   },
 ];
-
-// const tempWatchedData = [
-//   {
-//     imdbID: "tt1375666",
-//     Title: "Inception",
-//     Year: "2010",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-//     runtime: 148,
-//     imdbRating: 8.8,
-//     userRating: 10,
-//   },
-//   {
-//     imdbID: "tt0088763",
-//     Title: "Back to the Future",
-//     Year: "1985",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
-//     runtime: 116,
-//     imdbRating: 8.5,
-//     userRating: 9,
-//   },
-// ];
-
-const average = (arr) =>
-  arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
 const KEY = import.meta.env.VITE_API_KEY;
 
@@ -81,12 +61,14 @@ export default function App() {
   }
 
   useEffect(() => {
+    const controller = new AbortController();
     async function fetchMovies() {
       try {
         setError("");
         setIsLoading(true);
         const response = await fetch(
-          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`
+          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`, 
+          { signal: controller.signal }
         );
 
         if (!response.ok) {
@@ -101,8 +83,10 @@ export default function App() {
         setMovies(data.Search);
         // console.log(data);
       } catch (error) {
+        if (error.name !== "AbortError") {
+          setError(error.message);
+        }
         console.error(error.message);
-        setError(error.message);
         setMovies([]);
       } finally {
         setIsLoading(false);
@@ -116,6 +100,11 @@ export default function App() {
       return;
     }
     fetchMovies();
+
+    return () => {
+      controller.abort();
+    }
+
   }, [query]);
 
   return (
@@ -167,6 +156,7 @@ export default function App() {
                   <WatchedMovies
                     watched={watched}
                     onDeleteWatched={handleDeleteWatched}
+                    onSelectMovie={handleSelectMovie}
                   />
                 </>
               ))}
@@ -185,70 +175,6 @@ function ErrorMessage({ message }) {
   );
 }
 
-function Loader({ type }) {
-  return (
-    <>
-      {type === "list" && (
-        <div className="p-4">
-          <div className="space-y-4">
-            {[...Array(5)].map((_, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-4 animate-pulse"
-              >
-                <div className="w-16 h-24 bg-zinc-700 rounded-lg"></div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
-                  <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {type === "details" && (
-        <div className="p-4 space-y-6 animate-pulse">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex flex-col sm:flex-row items-start gap-4 pr-10">
-              <div className="w-32 h-48 bg-zinc-700 rounded-lg"></div>
-              <div className="space-y-2 mt-2 sm:mt-0 flex-1">
-                <div className="h-6 bg-zinc-700 rounded w-3/4"></div>
-                <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
-                <div className="h-4 bg-zinc-700 rounded w-1/3"></div>
-                <div className="h-4 bg-zinc-700 rounded w-1/4"></div>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="h-4 bg-zinc-700 rounded w-1/2"></div>
-            <div className="h-4 bg-zinc-700 rounded w-full"></div>
-            <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
-            <div className="h-4 bg-zinc-700 rounded w-2/3"></div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-function Header({ movies, query, setQuery }) {
-  return (
-    <header className="mb-8">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-5xl" role="img">
-            🎬
-          </span>
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">
-            CinemaTracker
-          </h1>
-        </div>
-        <SearchBox query={query} setQuery={setQuery} />
-      </div>
-      <FoundResults movieCount={movies?.length || 0} />
-    </header>
-  );
-}
-
 function SectionHeader({ children, isOpen, setIsOpen }) {
   return (
     <div className="bg-zinc-700 p-4 border-b border-zinc-600 flex items-center justify-between position-fixed">
@@ -264,7 +190,7 @@ function SectionHeader({ children, isOpen, setIsOpen }) {
   );
 }
 
-function SearchBox({ query, setQuery }) {
+export function SearchBox({ query, setQuery }) {
   return (
     <div className="relative">
       <input
@@ -286,7 +212,7 @@ function SearchBox({ query, setQuery }) {
   );
 }
 
-function FoundResults({ movieCount }) {
+export function FoundResults({ movieCount }) {
   return (
     <p className="text-zinc-400 text-right mt-2">
       Found <strong className="text-teal-400">{movieCount}</strong> movies
@@ -304,209 +230,7 @@ function MovieList({ movies, onSelectMovie }) {
   );
 }
 
-function Movie({ movie, onSelectMovie }) {
-  return (
-    <li
-      className="flex items-center gap-4 p-4 
-                 hover:bg-zinc-700 
-                 transition duration-300 
-                 cursor-pointer 
-                 group"
-      onClick={() => onSelectMovie(movie.imdbID)}
-    >
-      <img
-        src={movie.Poster}
-        alt={`${movie.Title} poster`}
-        className="w-16 h-24 object-cover rounded-lg shadow-md"
-      />
-      <div>
-        <h3 className="text-xl font-semibold text-zinc-100 group-hover:text-teal-400 transition">
-          {movie.Title}
-        </h3>
-        <div className="flex items-center gap-2 text-zinc-400 text-sm">
-          <span>📅</span>
-          <span>{movie.Year}</span>
-        </div>
-      </div>
-    </li>
-  );
-}
-
-function MovieDetails({ selectedId, onCloseDetails, onAddWatched, watched }) {
-  const [movie, setMovie] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [userRating, setUserRating] = useState(0);
-  const isWatched = watched.some((movie) => movie.imdbID === selectedId);
-  const alreadyRated = watched.find(
-    (movie) => movie.imdbID === selectedId
-  )?.userRating;
-
-  const {
-    Title: title,
-    // Year: year,
-    Poster: poster,
-    Plot: plot,
-    Director: director,
-    Actors: actors,
-    Released: released,
-    Genre: genre,
-    Runtime: runtime,
-    imdbRating,
-  } = movie;
-
-  function handleAdd() {
-    const newMovie = {
-      imdbID: selectedId,
-      Title: title,
-      Poster: poster,
-      runtime: parseInt(runtime),
-      imdbRating: parseFloat(imdbRating),
-      userRating: userRating,
-    };
-
-    onAddWatched(newMovie);
-    onCloseDetails();
-  }
-
-  useEffect(() => {
-    async function fetchMovieDetails() {
-      try {
-        setIsLoading(true);
-        const response = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        const data = await response.json();
-        setMovie(data);
-      } catch (error) {
-        console.error(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchMovieDetails();
-  }, [selectedId]);
-
-  return (
-    <div className="p-4 bg-zinc-800 rounded-lg shadow-lg text-zinc-100 space-y-6 relative overflow-y-auto scrollbar-hide h-120">
-      {isLoading ? (
-        <Loader type={"details"} />
-      ) : (
-        <>
-          <div className="flex justify-between items-start mb-4">
-            <header className="flex flex-col sm:flex-row items-start gap-4 pr-10">
-              <img
-                src={poster}
-                alt={`${title} poster`}
-                className="w-32 h-48 object-cover rounded-lg shadow-md"
-              />
-              <div className="space-y-2 mt-2 sm:mt-0">
-                <h2 className="text-2xl font-bold text-teal-400 pr-8">
-                  {title}
-                </h2>
-                <p className="text-sm text-zinc-400">
-                  {released} &bull; {runtime}
-                </p>
-                <p className="text-sm text-zinc-400">{genre}</p>
-                <p className="text-sm text-yellow-400">
-                  <span>⭐</span> {imdbRating} IMDb Rating
-                </p>
-              </div>
-            </header>
-
-            <button
-              className="absolute top-4 right-4 bg-zinc-700 rounded-full p-2
-        text-zinc-400 hover:text-teal-400 transition duration-300 w-10 h-10 flex items-center justify-center"
-              onClick={onCloseDetails}
-              aria-label="Go back"
-            >
-              <span className="text-2xl">&larr;</span>
-            </button>
-          </div>
-
-          <section className="space-y-4">
-            <div
-              className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${
-                userRating > 0 ? "bg-zinc-700/50" : ""
-              } p-4 rounded-lg w-full`}
-            >
-              <div className="flex items-center gap-2">
-                {isWatched ? (
-                  <p className="text-green-400 font-semibold text-start">
-                    Already Watched and Rated <span>⭐</span>
-                    {alreadyRated}
-                  </p>
-                ) : (
-                  <StarRating maxRating={10} size={20} onRate={setUserRating} />
-                )}
-                <span className="text-yellow-400 font-semibold">
-                  {userRating > 0 ? userRating : ""}
-                </span>
-              </div>
-
-              {userRating > 0 && (
-                <button
-                  className="bg-teal-500 text-zinc-100 px-4 py-2 rounded-lg hover:bg-teal-400 transition duration-300 w-full sm:w-auto text-center"
-                  onClick={() => {
-                    handleAdd();
-                  }}
-                >
-                  Add to Watched
-                </button>
-              )}
-            </div>
-            <p className="text-sm text-zinc-300 italic">{plot}</p>
-            <p className="text-sm text-zinc-300">
-              <strong className="text-zinc-100">Actors:</strong> {actors}
-            </p>
-            <p className="text-sm text-zinc-300">
-              <strong className="text-zinc-100">Director:</strong> {director}
-            </p>
-          </section>
-        </>
-      )}
-    </div>
-  );
-}
-
-function WatchedSummary({ watched }) {
-  const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
-  const avgUserRating = average(watched.map((movie) => movie.userRating));
-  const avgRuntime = average(watched.map((movie) => movie.runtime));
-
-  return (
-    <div className="p-6 bg-zinc-700/50">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          icon="🎬"
-          value={`${watched.length} movies`}
-          color="text-zinc-200"
-        />
-        <StatCard
-          icon="⭐️"
-          value={avgImdbRating.toFixed(1)}
-          color="text-yellow-400"
-        />
-        <StatCard
-          icon="🌟"
-          value={avgUserRating.toFixed(1)}
-          color="text-green-400"
-        />
-        <StatCard
-          icon="⏳"
-          value={`${avgRuntime.toFixed(0)} min`}
-          color="text-blue-400"
-        />
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ icon, value, color }) {
+export function StatCard({ icon, value, color }) {
   return (
     <div className="bg-zinc-800 rounded-lg p-4 text-center shadow-md">
       <div className={`text-3xl mb-2 ${color}`}>{icon}</div>
@@ -515,61 +239,7 @@ function StatCard({ icon, value, color }) {
   );
 }
 
-function WatchedMovies({ watched, onDeleteWatched }) {
-  if (watched.length === 0) {
-    return (
-      <div className="p-4 text-center text-zinc-400">
-        No movies watched yet. Start watching!
-      </div>
-    );
-  }
-  return (
-    <ul className="divide-y divide-zinc-700">
-      {watched.map((movie) => (
-        <li
-          key={movie.imdbID}
-          className="flex items-center gap-4 p-4 hover:bg-zinc-700 transition"
-        >
-          <img
-            src={movie.Poster}
-            alt={`${movie.Title} poster`}
-            className="w-16 h-24 object-cover rounded-lg shadow-md"
-          />
-          <div className="flex-grow">
-            <h3 className="text-xl font-semibold text-zinc-100">
-              {movie.Title}
-            </h3>
-            <div className="flex items-center gap-4 mt-2">
-              <MovieRating
-                icon="⭐️"
-                rating={movie.imdbRating}
-                color="text-zinc-100"
-              />
-              <MovieRating
-                icon="🌟"
-                rating={movie.userRating}
-                color="text-zinc-100"
-              />
-              <MovieRating
-                icon="⏳"
-                rating={`${movie.runtime} min`}
-                color="text-zinc-100"
-              />
-            </div>
-          </div>
-          <button
-            className="text-zinc-400 hover:text-teal-400 transition duration-300 bg-zinc-700 rounded-full p-2"
-            onClick={() => onDeleteWatched(movie.imdbID)}
-          >
-            <span className="text-2xl">&times;</span>
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function MovieRating({ icon, rating, color }) {
+export function MovieRating({ icon, rating, color }) {
   return (
     <p className={`flex items-center gap-2 text-sm ${color}`}>
       <span>{icon}</span>
