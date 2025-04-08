@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import StarRating from "./StarRating";
 import { Loader } from "./Loader";
 
-const KEY = import.meta.env.VITE_API_KEY;
+// const KEY = import.meta.env.VITE_API_KEY;
+const KEY = "33b3bc13";
 
 export function MovieDetails({
   selectedId,

@@ -30,7 +30,8 @@ const tempMovieData = [
   },
 ];
 
-const KEY = import.meta.env.VITE_API_KEY;
+const KEY = "33b3bc13";
+// const KEY = import.meta.env.VITE_API_KEY;
 
 export default function App() {
   const [movies, setMovies] = useState([]);
