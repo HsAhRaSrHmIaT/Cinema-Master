@@ -58,7 +58,7 @@ export function MovieDetails({
       try {
         setIsLoading(true);
         const response = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+          `https://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
         );
 
         if (!response.ok) {
