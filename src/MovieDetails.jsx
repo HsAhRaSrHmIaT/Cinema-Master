@@ -4,7 +4,12 @@ import { Loader } from "./Loader";
 
 const KEY = import.meta.env.VITE_API_KEY;
 
-export function MovieDetails({ selectedId, onCloseDetails, onAddWatched, watched }) {
+export function MovieDetails({
+  selectedId,
+  onCloseDetails,
+  onAddWatched,
+  watched,
+}) {
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);
@@ -26,7 +31,7 @@ export function MovieDetails({ selectedId, onCloseDetails, onAddWatched, watched
     imdbRating,
   } = movie;
 
-  function handleAdd() {
+  const handleAdd = React.useCallback(() => {
     const newMovie = {
       imdbID: selectedId,
       Title: title,
@@ -38,7 +43,7 @@ export function MovieDetails({ selectedId, onCloseDetails, onAddWatched, watched
 
     onAddWatched(newMovie);
     onCloseDetails();
-  }
+  }, [selectedId, title, poster, runtime, imdbRating, userRating, onAddWatched, onCloseDetails]);
 
   useEffect(() => {
     document.title = `CinemaTracker | ${title}`;
@@ -69,6 +74,29 @@ export function MovieDetails({ selectedId, onCloseDetails, onAddWatched, watched
     }
     fetchMovieDetails();
   }, [selectedId]);
+
+  useEffect(() => {
+    function callback(e) {
+      if (e.key === "Escape") {
+        onCloseDetails();
+      }
+    }
+
+    function enterAdd(e) {
+      if (e.key === "Enter" && userRating > 0) {
+        e.preventDefault();
+        handleAdd();
+      }
+    }
+
+    document.addEventListener("keydown", enterAdd);
+
+    document.addEventListener("keydown", callback);
+    return () => {
+      document.removeEventListener("keydown", callback);
+      document.removeEventListener("keydown", enterAdd);
+    };
+  }, [onCloseDetails, handleAdd, userRating]);
 
   return (
     <div className="p-4 bg-zinc-800 rounded-lg shadow-lg text-zinc-100 space-y-6 relative overflow-y-auto scrollbar-hide h-120">

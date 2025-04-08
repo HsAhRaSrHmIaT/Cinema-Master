@@ -1,5 +1,5 @@
 import React from "react";
-import { SearchBox, FoundResults } from "./App";
+import { SearchBox } from "./SearchBox";
 
 export function Header({ movies, query, setQuery }) {
   return (
@@ -17,5 +17,12 @@ export function Header({ movies, query, setQuery }) {
       </div>
       <FoundResults movieCount={movies?.length || 0} />
     </header>
+  );
+}
+export function FoundResults({ movieCount }) {
+  return (
+    <p className="text-zinc-400 text-right mt-2">
+      Found <strong className="text-teal-400">{movieCount}</strong> movies
+    </p>
   );
 }

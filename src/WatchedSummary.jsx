@@ -1,5 +1,4 @@
 import React from "react";
-import { StatCard } from "./App";
 import { average } from "./average";
 
 export function WatchedSummary({ watched }) {
@@ -31,6 +30,14 @@ export function WatchedSummary({ watched }) {
           color="text-blue-400"
         />
       </div>
+    </div>
+  );
+}
+export function StatCard({ icon, value, color }) {
+  return (
+    <div className="bg-zinc-800 rounded-lg p-4 text-center shadow-md">
+      <div className={`text-3xl mb-2 ${color}`}>{icon}</div>
+      <div className="text-zinc-300 font-medium">{value}</div>
     </div>
   );
 }

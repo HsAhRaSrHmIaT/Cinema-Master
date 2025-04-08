@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import StarRating from "./StarRating";
 import { WatchedSummary } from "./WatchedSummary";
 import { Movie } from "./Movie";
 import { Loader } from "./Loader";
@@ -67,7 +66,7 @@ export default function App() {
         setError("");
         setIsLoading(true);
         const response = await fetch(
-          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`, 
+          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`,
           { signal: controller.signal }
         );
 
@@ -81,12 +80,13 @@ export default function App() {
           throw new Error(data.Error);
         }
         setMovies(data.Search);
+        setError("");
         // console.log(data);
       } catch (error) {
         if (error.name !== "AbortError") {
           setError(error.message);
+          console.log(error.message);
         }
-        console.error(error.message);
         setMovies([]);
       } finally {
         setIsLoading(false);
@@ -99,26 +99,26 @@ export default function App() {
       setIsLoading(false);
       return;
     }
+    handleCloseDetails();
     fetchMovies();
 
     return () => {
       controller.abort();
-    }
-
+    };
   }, [query]);
 
   return (
-    <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 min-h-screen text-zinc-100 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 min-h-screen text-zinc-100 p-4 md:p-8 transition-all duration-300">
+      <div className="max-w-6xl mx-auto transition-all duration-300">
         <Header movies={movies} query={query} setQuery={setQuery} />
 
-        <main className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <main className="grid grid-cols-1 md:grid-cols-2 gap-8 transition-all duration-300">
           <div
-            className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide ${
+            className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide transition-all duration-300 ${
               isOpen1 ? "h-120" : "h-auto"
             }`}
           >
-            <div className="sticky top-0 z-10">
+            <div className="sticky top-0 z-10 transition-all duration-300">
               <SectionHeader isOpen={isOpen1} setIsOpen={setIsOpen1}>
                 Movie Catalog
               </SectionHeader>
@@ -131,11 +131,11 @@ export default function App() {
           </div>
 
           <div
-            className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide ${
+            className={`bg-zinc-800 rounded-2xl shadow-2xl overflow-y-auto scrollbar-hide transition-all duration-300 ${
               isOpen2 ? "h-120" : "h-auto"
             } `}
           >
-            <div className="sticky top-0 z-10">
+            <div className="sticky top-0 z-10 transition-all duration-300">
               <SectionHeader isOpen={isOpen2} setIsOpen={setIsOpen2}>
                 Watched Movies
               </SectionHeader>
@@ -150,7 +150,7 @@ export default function App() {
                 />
               ) : (
                 <>
-                  <div className="sticky top-0 z-10 bg-zinc-800 w-full">
+                  <div className="sticky top-0 z-10 bg-zinc-800 w-full transition-all duration-300">
                     <WatchedSummary watched={watched} />
                   </div>
                   <WatchedMovies
@@ -190,36 +190,6 @@ function SectionHeader({ children, isOpen, setIsOpen }) {
   );
 }
 
-export function SearchBox({ query, setQuery }) {
-  return (
-    <div className="relative">
-      <input
-        className="w-72 px-4 py-3 rounded-full 
-        bg-zinc-700 text-zinc-100 
-        placeholder-zinc-500 
-        focus:outline-none focus:ring-2 focus:ring-teal-500 
-        transition duration-300 
-        border border-zinc-600"
-        type="text"
-        placeholder="Search movies..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400">
-        🔍︎
-      </span>
-    </div>
-  );
-}
-
-export function FoundResults({ movieCount }) {
-  return (
-    <p className="text-zinc-400 text-right mt-2">
-      Found <strong className="text-teal-400">{movieCount}</strong> movies
-    </p>
-  );
-}
-
 function MovieList({ movies, onSelectMovie }) {
   return (
     <ul className="divide-y divide-zinc-700">
@@ -227,23 +197,5 @@ function MovieList({ movies, onSelectMovie }) {
         <Movie key={movie.imdbID} movie={movie} onSelectMovie={onSelectMovie} />
       ))}
     </ul>
-  );
-}
-
-export function StatCard({ icon, value, color }) {
-  return (
-    <div className="bg-zinc-800 rounded-lg p-4 text-center shadow-md">
-      <div className={`text-3xl mb-2 ${color}`}>{icon}</div>
-      <div className="text-zinc-300 font-medium">{value}</div>
-    </div>
-  );
-}
-
-export function MovieRating({ icon, rating, color }) {
-  return (
-    <p className={`flex items-center gap-2 text-sm ${color}`}>
-      <span>{icon}</span>
-      <span>{rating}</span>
-    </p>
   );
 }
