@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import StarRating from "./StarRating";
 import { Loader } from "./Loader";
+import { useKey } from "./useKey";
 
 // const KEY = import.meta.env.VITE_API_KEY;
 const KEY = "33b3bc13";
@@ -18,6 +19,11 @@ export function MovieDetails({
   const alreadyRated = watched.find(
     (movie) => movie.imdbID === selectedId
   )?.userRating;
+
+  const countRef = useRef(0);
+  useEffect(() => {
+    if (userRating) countRef.current++;
+  }, [userRating]);
 
   const {
     Title: title,
@@ -40,6 +46,7 @@ export function MovieDetails({
       runtime: parseInt(runtime),
       imdbRating: parseFloat(imdbRating),
       userRating: userRating,
+      ratingDecisions: countRef.current,
     };
 
     onAddWatched(newMovie);
@@ -76,28 +83,29 @@ export function MovieDetails({
     fetchMovieDetails();
   }, [selectedId]);
 
-  useEffect(() => {
-    function callback(e) {
-      if (e.key === "Escape") {
-        onCloseDetails();
-      }
-    }
+  useKey("Escape", onCloseDetails);
+  // useEffect(() => {
+  //   function callback(e) {
+  //     if (e.key === "Escape") {
+  //       onCloseDetails();
+  //     }
+  //   }
 
-    function enterAdd(e) {
-      if (e.key === "Enter" && userRating > 0) {
-        e.preventDefault();
-        handleAdd();
-      }
-    }
+  //   function enterAdd(e) {
+  //     if (e.key === "Enter" && userRating > 0) {
+  //       e.preventDefault();
+  //       handleAdd();
+  //     }
+  //   }
 
-    document.addEventListener("keydown", enterAdd);
+  //   document.addEventListener("keydown", enterAdd);
 
-    document.addEventListener("keydown", callback);
-    return () => {
-      document.removeEventListener("keydown", callback);
-      document.removeEventListener("keydown", enterAdd);
-    };
-  }, [onCloseDetails, handleAdd, userRating]);
+  //   document.addEventListener("keydown", callback);
+  //   return () => {
+  //     document.removeEventListener("keydown", callback);
+  //     document.removeEventListener("keydown", enterAdd);
+  //   };
+  // }, [onCloseDetails, handleAdd, userRating]);
 
   return (
     <div className="p-4 bg-zinc-800 rounded-lg shadow-lg text-zinc-100 space-y-6 relative overflow-y-auto scrollbar-hide h-120">

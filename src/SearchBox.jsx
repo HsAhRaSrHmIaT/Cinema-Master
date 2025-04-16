@@ -1,21 +1,17 @@
-import React, { useEffect } from "react";
+import React, { useRef } from "react";
+import { useKey } from "./useKey";
 
 export function SearchBox({ query, setQuery }) {
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.ctrlKey && event.key === "s") {
-        event.preventDefault();
-        const searchBox = document.querySelector("input[type='text']");
-        searchBox.focus();
-      }
-    };
+  const inputElement = useRef(null);
 
-    window.addEventListener("keydown", handleKeyDown);
+  useKey("Enter", () => {
+    if (document.activeElement === inputElement.current) {
+      return;
+    }
+    inputElement.current.focus();
+      setQuery("");
+  });
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
 
   return (
     <div className="relative">
@@ -30,6 +26,7 @@ export function SearchBox({ query, setQuery }) {
         placeholder="Search movies..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        ref={inputElement}
       />
       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400">
         🔍︎
